@@ -1,4 +1,6 @@
 # hangman game
+
+# player class
 class Player
   attr_accessor :letters_used, :current_answer, :wrong_answers, :secret_word, :game_over, :victory
 
@@ -11,28 +13,22 @@ class Player
     @victory = false
   end
 
-  def test_guess(guess)
-    if secret_word.include?(guess)
-      current_answer[secret_word.index(guess)] = guess
+  def guess(current_answer, secret_word)
+    guess = gets.chomp.strip.downcase
+    if guess.length == 1
+      @letters_used.push(guess) if @letters_used.count(guess).zero?
+      puts "Letters used: #{letters_used}"
+      @wrong_answers += 1 if secret_word.count(guess).zero?
+      puts "Wrong answers: #{wrong_answers}"
+      secret_word.split('').each_with_index {|letter, i|
+        current_answer[i] = guess if letter == guess
+      }
+      puts current_answer.join(' ')
     end
-  end
-
-  def guess
-    guess = gets.chomp.strip
-    if letters_used.count(guess).zero?
-      letters_used.push(guess)
-    end
-    puts "Letters used: #{letters_used}"
-    if secret_word.count(guess).zero?
-      @wrong_answers += 1
-    end
-    test_guess(guess) while current_answer.count(guess) < secret_word.count(guess)
   end
 
   def check_game_over(current_answer, secret_word)
-    if @wrong_answers > 10
-      @game_over = true
-    end
+    @game_over = true if @wrong_answers > 10
     if current_answer.join('') == secret_word
       @victory = true
       @game_over = true
@@ -49,7 +45,6 @@ class Player
 end
 
 player = Player.new
-player.guess
 dictionary = File.open('google-10000-english-no-swears.txt')
 words = dictionary.readlines
 
@@ -59,8 +54,7 @@ end
 player.current_answer = Array.new(player.secret_word.length, '_')
 
 until player.game_over
-  player.guess
-  puts player.current_answer.join(' ')
+  player.guess(player.current_answer, player.secret_word)
   player.check_game_over(player.current_answer, player.secret_word)
 end
 
