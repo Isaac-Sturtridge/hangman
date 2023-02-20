@@ -1,4 +1,5 @@
 # hangman game
+require 'json'
 
 # player class
 class Player
@@ -13,8 +14,7 @@ class Player
     @victory = false
   end
 
-  def guess(current_answer, secret_word)
-    guess = gets.chomp.strip.downcase
+  def guess(guess, current_answer, secret_word)
     if guess.length == 1
       @letters_used.push(guess) if @letters_used.count(guess).zero?
       puts "Letters used: #{letters_used}"
@@ -44,6 +44,9 @@ class Player
   end
 end
 
+puts "Welcome to hangman! Guess a single letter to begin. You can have 10 wrong answers. To save, type 'save', a space 
+and name of file (e.g. 'save 1'). To load, type load instead (e.g. 'load 1').
+Be aware that looking inside the savefile will reveal the answer in current build."
 player = Player.new
 dictionary = File.open('google-10000-english-no-swears.txt')
 words = dictionary.readlines
@@ -54,7 +57,22 @@ end
 player.current_answer = Array.new(player.secret_word.length, '_')
 
 until player.game_over
-  player.guess(player.current_answer, player.secret_word)
+  guess = gets.chomp.strip.downcase
+  if guess.length > 1
+    if guess.split(' ')[0] == 'save'
+      game_state = [{'Secret_word'=>player.secret_word, 'Current_answer'=>player.current_answer, 'Wrong_answer'=>player.wrong_answers}]
+      File.open("#{guess.split(' ')[1]}.json", 'w') { |f| f.puts game_state.to_json }
+    end
+    if guess.split(' ')[0] == 'load'
+      file = File.open("#{guess.split(' ')[1]}.json", 'r')
+      game_state = JSON.load(file)
+      player.secret_word = game_state[0]['Secret_word']
+      player.current_answer = game_state[0]['Current_answer']
+      player.wrong_answers = game_state[0]['Wrong_answers']
+      guess = gets.chomp.strip.downcase
+    end
+  end
+  player.guess(guess, player.current_answer, player.secret_word)
   player.check_game_over(player.current_answer, player.secret_word)
 end
 
